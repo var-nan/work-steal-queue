@@ -8,7 +8,7 @@
 
 #include "node.h"
 
-#define _queue_limit_ 32
+#define _queue_limit_ 8
 
 
 typedef node lf_node;

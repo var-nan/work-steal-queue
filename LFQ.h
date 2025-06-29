@@ -10,6 +10,8 @@
 #include <tuple>
 #include <string>
 #include <vector>
+#include <numeric>
+#include <algorithm>
 
 #include "node.h"
 
@@ -17,10 +19,17 @@
 
 using namespace std;
 
+enum WORKLOAD {
+    PUSH_HEAVY = 0,
+    POP_HEAVY = 1,
+    STEAL_HEAVY = 2
+};
+
 
 template<typename T> 
 class TestQ {
     std::string name;
+    const size_t iterations = 10;
 
     llist get_nodes(size_t n){
         node *start = new node();
@@ -201,39 +210,55 @@ public:
         average_time = average_time/iterations;
         cout << name << " steal:\t" << average_time <<" ms." << endl;
     }
+
+    void testOwnerPushPop(size_t init_size, size_t nops){
+        double total_time = 0.0;
+        vector<double> times(iterations);
+
+        for (size_t iter = 0; iter < iterations; iter++){
+            llist init_nodes = get_nodes(init_size);
+            T lfq;
+            lfq.b_push(init_nodes);
+
+            vector<double> op_latency;
+
+            volatile size_t uncached_num;
+            for (size_t i = 0; i < nops; i++){
+                if (!(i % 3)){ // push operation.
+                    llist new_list = get_nodes(128);
+
+                    asm volatile("" ::: "memory");
+                    auto start = std::chrono::high_resolution_clock::now();
+
+                    lfq.b_push(new_list);
+
+                    auto end = std::chrono::high_resolution_clock::now();
+                    op_latency.push_back(std::chrono::duration<double>(end-start).count() * (1e6));
+                    asm volatile("" ::: "memory");
+                }
+                else { // pop operation
+                    asm volatile("" ::: "memory");
+                    auto start = std::chrono::high_resolution_clock::now();
+
+                    node *popped_node = lfq.pop();
+
+                    auto end = std::chrono::high_resolution_clock::now();
+                    op_latency.push_back(std::chrono::duration<double>(end-start).count() * (1e6));
+                    asm volatile("" ::: "memory");
+                    uncached_num = popped_node->padding[0];
+                    delete popped_node;
+                }
+            }
+            double total_time = std::accumulate(op_latency.begin(), op_latency.end(), 0.0);
+            times[iter] = total_time; 
+        }
+        double avg = std::accumulate(times.begin(), times.end(), 0.0)/iterations;
+        cout << name << " push-pop:\t" << avg << " ms. " << endl;
+    }
+
+    void testPushSteal(size_t init_size, size_t nops){
+
+    }
 };
 
 #endif
-
-// typedef struct node {
-//     int id;
-//     uint8_t padding[32]; // TODO: use appropriate padding.
-//     node *next;
-// } node;
-
-// class WSQ{
-// public:
-//     void init(size_t n); // init queue with n nodes.
-//     virtual void push(benchmark::State& state) = 0; // benchmark push operation with n nodes
-//     virtual void pop(benchmark::State& state) = 0;
-//     virtual void push_pop(benchmark::State& state) = 0;
-//     virtual void steal(benchmark::State& state) = 0;
-//     virtual void push_steal(benchmark::State& state) = 0;
-// };
-
-
-// typedef struct {
-    
-// } arguments;
-
-// class WSQ_Measure{
-// public:
-//     virtual void init(size_t n) = 0; // initialize
-//     virtual void push(size_t init_size, size_t npush) = 0;
-//     virtual void pop(size_t init_size, size_t npop) = 0; // 
-//     virtual void steal(size_t init_size) = 0;
-//     virtual void push_steal(size_t init_size, size_t npop) = 0;
-//     virtual void push_pop(size_t init_size, size_t npush, size_t npop) = 0; // 
-// };
-
-
