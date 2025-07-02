@@ -125,7 +125,7 @@ public:
                     auto end = std::chrono::high_resolution_clock::now();
                     push_latencies[i] = std::chrono::duration<double>(end-start).count();  
                     asm volatile("" ::: "memory");
-                    uncached_num = popped_node->padding[0];
+                    uncached_num = popped_node->id;
 
                     delete popped_node;
                 }
@@ -245,7 +245,7 @@ public:
                     auto end = std::chrono::high_resolution_clock::now();
                     op_latency.push_back(std::chrono::duration<double>(end-start).count() * (1e6));
                     asm volatile("" ::: "memory");
-                    uncached_num = popped_node->padding[0];
+                    uncached_num = popped_node->id;
                     delete popped_node;
                 }
             }

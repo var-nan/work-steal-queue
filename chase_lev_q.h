@@ -86,6 +86,11 @@ public:
         if (!stolen.empty()) stolen.back()->next = nullptr;
         return stolen.empty() ? llist{nullptr, nullptr, 0} : llist{stolen.front(), stolen.back(), stolen.size()};
     }
+
+    llist b_steal(double proportion){
+        return steal(proportion);
+    }
+    size_t size() const noexcept { return (bottom.load() - top.load()); }
 };
 
 

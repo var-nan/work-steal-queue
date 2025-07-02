@@ -5,7 +5,9 @@
 #include "LFQ.h"
 #include "lf_queue.h"
 #include "tf_queue.h"
-#include "chase_lev_q.h"
+#include "chase_lev_queue.h"
+
+using namespace myqueue;
 
 int main(){
     std::cout << "pavani nandhan" << std::endl;
@@ -36,20 +38,23 @@ int main(){
     TestQ<lf_queue> lfq("Nandu Q");
     lfq.testPush(1000, 100000);
     lfq.testPop(100000, 10000);
-    lfq.testBulkPush(1000, 100000);
+    lfq.testBulkPush(1000, 100);
     lfq.testSteal(100000, 0.5);
+    lfq.testOwnerPushPop(100, 10000);
 
     TestQ<tf_ub_queue> tfubq("Tf ub Q");
     tfubq.testPush(1000, 100000); 
     tfubq.testPop(100000, 10000);
-    tfubq.testBulkPush(1000, 100000);
+    tfubq.testBulkPush(1000, 100);
     tfubq.testSteal(100000, 0.50);
+    tfubq.testOwnerPushPop(100, 10000);
 
-    // TestQ<ChaseLevQueue> clq("CL Q");
-    // clq.testPush(1000, 100000);
-    // clq.testPop(100000, 10000);
-    // clq.testBulkPush(1000, 100000);
-    // clq.testSteal(100000, 0.5);
+    TestQ<cl_queue> clq("Chase Q");
+    clq.testPush(1000, 100000);
+    clq.testPop(100000, 10000);
+    clq.testBulkPush(1000, 100);
+    clq.testSteal(100000, 0.5);
+    clq.testOwnerPushPop(100, 10000);
 
     return 0;
 }
