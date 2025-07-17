@@ -44,7 +44,7 @@ public:
 };
 
 
-constexpr size_t TF_BQ_SIZE = 8;
+constexpr size_t TF_BQ_SIZE = 15;
 
 class tf_bq : public tf::BoundedTaskQueue<tf_node *, TF_BQ_SIZE>, public work_steal_queue{
 public:
