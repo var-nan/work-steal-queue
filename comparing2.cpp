@@ -15,7 +15,6 @@ public:
         Worker<T>& payload = payloads[id];
         
     }
-        
 };
 
 template <typename T>

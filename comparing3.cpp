@@ -72,11 +72,16 @@ public:
         assert(graph.roots.size() == nworkers && "Number of roots must match number of workers");
 
         // Initialize each worker queue with a root node
-        for (size_t i = 0; i < nworkers; ++i) {
-            Node* root = graph.roots[i];
+        for (size_t i = 0; i < graph.roots.size(); i++){
+            Node *root = graph.roots[i];
             llist initial = {root, root, 1};
-            (payloads[i].local_q).b_push(initial);
+            (payloads[(i%nworkers)].local_q).b_push(initial);
         }
+        // for (size_t i = 0; i < nworkers; ++i) {
+        //     Node* root = graph.roots[i];
+        //     llist initial = {root, root, 1};
+        //     (payloads[i].local_q).b_push(initial);
+        // }
 
         vector<thread> threads(nworkers);
 
@@ -115,7 +120,7 @@ public:
 
                 if (!current->visited.exchange(true)) {
                     ++worker.tasks_processed;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // processing some work.
+                    std::this_thread::sleep_for(std::chrono::milliseconds(2)); // processing some work.
                     // Push unvisited children to local queue
                     Node* head = nullptr;
                     Node* tail = nullptr;
@@ -133,7 +138,7 @@ public:
                     if (count > 0) {
                         tail->next = nullptr;
                         llist child_list = {head, tail, count};
-                        (worker.local_q).push(child_list);
+                        (worker.local_q).b_push(child_list);
                     }
                 }
             }
@@ -218,16 +223,121 @@ Graph generate_dag(size_t n_roots) {
     return g;
 }
 
-int main(){
-	size_t n = 2;
-	Graph g = generate_dag(n);
-    std::cout << "Graph generated" << std::endl;
-	DFSExplore<lf_queue> explore(n);
-	explore.explore(g);
+Graph generate_dag2(size_t n_roots){
+    Graph g;
+    // std::mt19937 rng(random_device{}());
+    std::mt19937 rng(47);
+    std::uniform_int_distribution<int> depth_dist(4, 7);
+    std::uniform_int_distribution<int> outdegree_dist(2, 7);
 
-    std::cout << "LFQ Complted" << std::endl;
+    int depth = depth_dist(rng);
+
+    size_t n_generated = 0;
+    
+    // generate roots
+    for (int i = 0; i < n_roots; i++){
+        Node *new_root = new Node();
+        n_generated++;
+        g.roots.push_back(new_root);
+    }
+
+    std::vector<Node *> current_layer = g.roots;
+    for (int i = 0; i < depth; i++){
+        std::vector<Node *> next_layer;
+        next_layer.reserve(current_layer.size() * 4);
+
+        for (int j = 0; j < current_layer.size(); j++){
+            Node *current = current_layer[j];
+            int outdegree = outdegree_dist(rng);
+
+            for (int k = 0; k < outdegree; k++){
+                Node *new_node = new Node();
+                current->outgoing.push_back(new_node);
+                next_layer.push_back(new_node);
+            }
+            n_generated += outdegree;
+            // chain all siblings.
+
+            Node *first = current->outgoing[0];
+            for (int k = 1; k < outdegree; k++){
+                first->next = current->outgoing[k];
+                first = first->next;
+            }
+        }
+        current_layer = next_layer; 
+    }
+    std::cout << "Total generated nodes: " << n_generated << std::endl;
+    return g;
+}
+
+void destroy_dag(Graph& g){
+    // remove all nodes.
+    std::queue<Node *> nodes;
+    
+    for (int i = 0; i < g.roots.size(); i++)
+        nodes.push(g.roots[i]);
+    
+    while (!nodes.empty()){
+        // pop top and push its outgoing
+        Node *top = nodes.front();
+        nodes.pop();
+
+        for (int i = 0; i < top->outgoing.size(); i++)
+            nodes.push(top->outgoing[i]);
+        delete top;
+    }
+}
+
+void reset_dag(Graph& g){
+    // reset atomic flags in all nodes.
+    std::queue<Node *> nodes;
+    
+    for (int i = 0; i < g.roots.size(); i++)
+        nodes.push(g.roots[i]);
+
+    while(!nodes.empty()){
+        Node *top = nodes.front();
+        nodes.pop();
+
+        top->visited.store(false);
+
+        for (int i = 0; i < top->outgoing.size(); i++)
+            nodes.push(top->outgoing[i]);
+    }
+    // reset complete.
+}
+
+int main(){
+
+    
+	size_t n = 4;
+	Graph g = generate_dag2(16);
+    std::cout << "Graph generated" << std::endl;
+
+    for (int i = 1; i <= 16; i*= 2){
+
+        DFSExplore<lf_queue> explore2(i);
+        explore2.explore(g);
+        reset_dag(g);
+    }
+    return 0;
     DFSExplore<tf_ub_queue> explore2(n);
     explore2.explore(g);
+    reset_dag(g);
+
+    std::cout << "TF Unbonded queue completed" << std::endl;
+
+    DFSExplore<tf_bq> explore3(n);
+    explore3.explore(g);
+    reset_dag(g);
+    std::cout << "TF Bounded queue completed" << std::endl;
+
+    DFSExplore<lf_queue> explore(n);
+	explore.explore(g);
+    reset_dag(g);
+    std::cout << "LFQ Completed" << std::endl;
+    
+    destroy_dag(g);
 
     std::cout << "Program completed" << std::endl;
 }
