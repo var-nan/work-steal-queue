@@ -44,3 +44,6 @@ target_compile_options(comparing PRIVATE -Wall -Wextra)
 add_executable(benchmark2 benchmark2.cpp utils.h)
 target_link_libraries(benchmark2 benchmark::benchmark)
 target_include_directories(benchmark2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/taskflow-src")
+
+add_executable(comparing3 comparing3.cpp)
+target_include_directories(comparing3 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/taskflow-src")

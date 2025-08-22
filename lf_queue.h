@@ -8,7 +8,7 @@
 
 #include "node.h"
 
-#define _queue_limit_ 8
+#define _queue_limit_ 4
 
 
 typedef node lf_node;
@@ -20,6 +20,15 @@ class lf_queue : public work_steal_queue{
 
 public:
     lf_queue() = default;
+    
+    // move ctor and move assign 
+    lf_queue(lf_queue&& lfq) noexcept : length{lfq.length.load()}, head{lfq.head.load()}{}
+
+    lf_queue& operator=(lf_queue&& lfq) noexcept {
+        head.store(lfq.head.load());
+        length.store(lfq.length.load());
+        return *this;
+    }
 
     [[nodiscard]] size_t getSize() const noexcept {return length.load(std::memory_order_acquire); }
     [[nodiscard]] bool empty() const noexcept {return length.load(std::memory_order_acquire) == 0; }

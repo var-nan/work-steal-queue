@@ -18,8 +18,18 @@ public:
         
 };
 
-
-
+template <typename T>
+class DFSExplore {
+private:
+	std::vector<Worker<T>> payloads;
+	size_t nworkers;
+	
+	DFSExplore(size_t nworkers_): nworkers{nworkers_} {}
+	
+	void explore(const Graph& graph ){
+        	
+	}
+};
 
 int main(){
 

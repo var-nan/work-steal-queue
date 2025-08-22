@@ -28,9 +28,11 @@ public:
     uint32_t sleeptime = 0;
     std::vector<std::pair<uint32_t, uint32_t>> children;
     std::vector<size_t> childs;
-    // std::atomic<bool> visited = false;
+    // only these two are required.
+    std::atomic<bool> visited = false;
+    std::vector<node *> outgoing;
     
-    node *next = nullptr;
+    node *next = nullptr; // for linked list.
 
     node() = default;
     node(uint32_t id_) : id{id_}, layerNo{0}{};
