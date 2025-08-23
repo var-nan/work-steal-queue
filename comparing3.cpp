@@ -308,34 +308,38 @@ void reset_dag(Graph& g){
 }
 
 int main(){
-
     
-	size_t n = 4;
-	Graph g = generate_dag2(16);
+
+    size_t max_threads = std::thread::hardware_concurrency();
+	size_t n = (max_threads > 32) ? max_threads : 32;
+	Graph g = generate_dag2(n);
     std::cout << "Graph generated" << std::endl;
 
-    for (int i = 1; i <= 16; i*= 2){
+    std::cout << "Maximum " << max_threads << " concurrent threads are supported on this machine." << std::endl;
 
-        DFSExplore<lf_queue> explore2(i);
-        explore2.explore(g);
+    std::cout << "\n\nTaskflow Unbounded Queue" << std::endl;
+    for (int i = 1; i <= max_threads; i*= 2){
+        DFSExplore<tf_ub_queue> explore(i);
+        explore.explore(g);
         reset_dag(g);
+        std::cout << "\n\n" << std::endl;
     }
-    return 0;
-    DFSExplore<tf_ub_queue> explore2(n);
-    explore2.explore(g);
-    reset_dag(g);
 
-    std::cout << "TF Unbonded queue completed" << std::endl;
+    std::cout << "\n\nLock-free Queue" << std::endl;
+    for (int i = 1; i <= max_threads; i*= 2){
+        DFSExplore<lf_queue> explore(i);
+        explore.explore(g);
+        reset_dag(g);
+        std::cout << "\n\n" << std::endl; 
+    }
 
-    DFSExplore<tf_bq> explore3(n);
-    explore3.explore(g);
-    reset_dag(g);
-    std::cout << "TF Bounded queue completed" << std::endl;
-
-    DFSExplore<lf_queue> explore(n);
-	explore.explore(g);
-    reset_dag(g);
-    std::cout << "LFQ Completed" << std::endl;
+    std::cout << "\n\nTaskflow Bounded Queue." << std::endl;
+    for (int i = 1; i <= max_threads; i*= 2){
+        DFSExplore<tf_bq> explore(i);
+        explore.explore(g);
+        reset_dag(g);
+        std::cout << "\n\n" << std::endl;
+    }
     
     destroy_dag(g);
 

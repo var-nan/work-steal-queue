@@ -112,7 +112,7 @@ static void BM_TF_Pop(benchmark::State& state){
         delete popped_node;
 }
 
-
+BENCHMARK_CAPTURE(BM_Push, LF_Queue, new lf_queue(), "My Queue")->Args({1});
 BENCHMARK_CAPTURE(BM_Push, LF_Queue, new lf_queue(), "My queue")->Args({128});
 BENCHMARK_CAPTURE(BM_Push, LF_Queue, new lf_queue(), "My queue")->Args({512});
 BENCHMARK_CAPTURE(BM_Push, LF_Queue, new lf_queue(), "My queue")->Args({1024});
@@ -122,6 +122,7 @@ BENCHMARK_CAPTURE(BM_Steal, LF_Queue, new lf_queue(), "My Queue")->Args({2, 1000
 BENCHMARK_CAPTURE(BM_Steal, LF_Queue, new lf_queue(), "My Queue")->Args({4, 10000});
 BENCHMARK_CAPTURE(BM_Steal, LF_Queue, new lf_queue(), "My Queue")->Args({7, 10000});
 
+BENCHMARK_CAPTURE(BM_Push, TF_UB_Queue, new tf_ub_queue(), "Task flow ub Queue")->Args({1});
 BENCHMARK_CAPTURE(BM_Push, TF_UB_Queue, new tf_ub_queue(), "Task flow ub Queue")->Args({128});
 BENCHMARK_CAPTURE(BM_Push, TF_UB_Queue, new tf_ub_queue(), "Task flow ub Queue")->Args({512});
 BENCHMARK_CAPTURE(BM_Push, TF_UB_Queue, new tf_ub_queue(), "Task flow ub Queue")->Args({1024});
@@ -131,6 +132,7 @@ BENCHMARK_CAPTURE(BM_Steal, TF_Queue, new tf_ub_queue(), "Taskflow ub queue")->A
 BENCHMARK_CAPTURE(BM_Steal, TF_Queue, new tf_ub_queue(), "Taskflow ub queue")->Args({4,10000});
 BENCHMARK_CAPTURE(BM_Steal, TF_Queue, new tf_ub_queue(), "Taskflow ub queue")->Args({7,10000});
 
+BENCHMARK_CAPTURE(BM_Push, TF_BD_Queue, new tf_bq(), "TaskFlow Bounded Queue")->Args({1});
 BENCHMARK_CAPTURE(BM_Push, TF_BD_Queue, new tf_bq(), "TaskFlow Bounded Queue")->Args({128});
 BENCHMARK_CAPTURE(BM_Push, TF_BD_Queue, new tf_bq(), "TaskFlow Bounded Queue")->Args({512});
 BENCHMARK_CAPTURE(BM_Push, TF_BD_Queue, new tf_bq(), "TaskFlow Bounded Queue")->Args({1024});
