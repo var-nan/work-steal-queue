@@ -127,6 +127,44 @@ public:
     }
 
     size_t size() const noexcept { return length.load(); }
+
+    llist b_steal_single(double proportion) {
+        proportion = 1 - proportion; // % of nodes left in queue after successful completion of this operation.
+
+        size_t sz = length.load(); // memory_order::acquire
+        if (sz < _queue_limit_) return {nullptr, nullptr, 0};
+
+        size_t n_skip = static_cast<size_t>(static_cast<double>(sz) * proportion);// number of nodes to skip from head.
+        size_t rem = sz - n_skip; // number of nodes popped from the queue from the end.
+        size_t k = n_skip;
+
+        lf_node *start = head.load(); // memory_order::acquire should also work.
+
+        while (n_skip && start) {
+            start = start->next;
+            n_skip--;
+        }
+        // while (--n_skip && start && start->next) start = start->next;
+
+        if (n_skip || !start) return {nullptr, nullptr, 0};
+
+        size_t ssz = length.load(); // memory order: acquire
+        if (ssz <= (sz - (k>>1))) {
+            return {nullptr, nullptr, 0}; // nodes are popped very quick, retry.
+        }
+
+        lf_node *begin = start->next;
+        start->next = nullptr;
+
+        size_t count = 0;
+
+        lf_node *end = begin; // skipping for now, since not required.
+
+        // small optimization, if producer didn't pop any node, no need to traverse till end.
+        // do not use this if owner concurrently updates the queue during this operation.
+        length.fetch_sub(k);
+        return {begin, begin, k};
+    }
 };
 
 

@@ -65,6 +65,30 @@ static void BM_Steal(benchmark::State& state, work_steal_queue *q, const string&
     }
 }
 
+static void BM_Steal_Single (benchmark::State& state, lf_queue *q, const string& label){
+    const size_t init_size = state.range(1);
+    double proportion = double(state.range(0))/10;
+
+    // initialize queue
+    llist nodes= get_nodes(init_size);
+    q->b_push(nodes);
+
+    volatile size_t p;
+
+    for (auto _ : state){
+        llist popped_nodes = q->b_steal_single(proportion);
+        p = popped_nodes.size;
+
+        state.PauseTiming();
+        q->b_push(popped_nodes);
+        state.ResumeTiming();
+    }
+
+    while(auto popped_node = q->pop()){
+        delete popped_node;
+    }
+}
+
 static void BM_Pop(benchmark::State& state, work_steal_queue *q, const string& label){
     const size_t init_size = state.range(0);
     
@@ -121,6 +145,10 @@ BENCHMARK_CAPTURE(BM_Steal, LF_Queue, new lf_queue(), "My Queue")->Args({1, 1000
 BENCHMARK_CAPTURE(BM_Steal, LF_Queue, new lf_queue(), "My Queue")->Args({2, 10000});
 BENCHMARK_CAPTURE(BM_Steal, LF_Queue, new lf_queue(), "My Queue")->Args({4, 10000});
 BENCHMARK_CAPTURE(BM_Steal, LF_Queue, new lf_queue(), "My Queue")->Args({7, 10000});
+BENCHMARK_CAPTURE(BM_Steal_Single, LF_Queue, new lf_queue(), "My Queue")->Args({1, 10000});
+BENCHMARK_CAPTURE(BM_Steal_Single, LF_Queue, new lf_queue(), "My Queue")->Args({2, 10000});
+BENCHMARK_CAPTURE(BM_Steal_Single, LF_Queue, new lf_queue(), "My Queue")->Args({4, 10000});
+BENCHMARK_CAPTURE(BM_Steal_Single, LF_Queue, new lf_queue(), "My Queue")->Args({7, 10000});
 
 BENCHMARK_CAPTURE(BM_Push, TF_UB_Queue, new tf_ub_queue(), "Task flow ub Queue")->Args({1});
 BENCHMARK_CAPTURE(BM_Push, TF_UB_Queue, new tf_ub_queue(), "Task flow ub Queue")->Args({128});
